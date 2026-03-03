@@ -4,7 +4,7 @@ import plotly.express as px
 import os
 
 # Configurações de layout
-st.set_page_config(page_title="SINFO - Relatórios Trimestrais", layout="wide")
+st.set_page_config(page_title="SINFO - Relatórios Trimestrais", layout="wide", initial_sidebar_state="collapsed") # Isso aqui faz a mágica!)
 
 st.title("📊 Painel de Controle de Chamados - CEFET/RJ")
 st.markdown("---")
