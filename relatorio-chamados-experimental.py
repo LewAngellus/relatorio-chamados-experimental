@@ -1,3 +1,4 @@
+import os # Adicione isso no topo do arquivo
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -52,6 +53,23 @@ if df is not None:
     col2.metric("Encerrados", encerrados, f"{taxa_sucesso:.1f}% Eficiência")
     col3.metric("Atrasados", atrasados, delta_color="inverse")
     col4.metric("Em Atendimento", atribuídos)
+
+    # 2. Criar o seletor na barra lateral
+if arquivos_disponiveis:
+    arquivo_selecionado = st.sidebar.selectbox(
+        "Selecione o arquivo de dados:",
+        arquivos_disponiveis
+    )
+    
+    # 3. Carregar o arquivo que o usuário escolheu
+    @st.cache_data
+    def load_data(nome_arquivo):
+        return pd.read_csv(nome_arquivo)
+
+    df = load_data(arquivo_selecionado)
+else:
+    st.error("Nenhum arquivo .csv encontrado no repositório!")
+    st.stop()
 
     st.markdown("---")
 
