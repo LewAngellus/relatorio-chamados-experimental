@@ -34,6 +34,16 @@ with col3:
     st.metric("Em Atribuição", df['Atribuído'].iloc[0])
 with col4:
     st.metric("Atrasados", df['Atrasado'].iloc[0], delta_color="inverse")
+try:
+    df = load_data()
+    unidade = df['Departamento'].iloc[0]
+    
+    # PEGAR AS DATAS DO CSV
+    data_ini = df['Data_Inicio'].iloc[0]
+    data_fim = df['Data_Fim'].iloc[0]
+
+    st.subheader(f"Período do Relatório: {data_ini} até {data_fim}")
+    st.info(f"Unidade Responsável: {unidade}")
 
 st.markdown("---")
 
