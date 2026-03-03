@@ -1,112 +1,93 @@
-import os # Adicione isso no topo do arquivo
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os
 
-# 1. Configurações Iniciais
-st.set_page_config(page_title="Relatório SINFO - CEFET/RJ", layout="wide")
+# 1. Configuração da página
+st.set_page_config(page_title="Relatórios SINFO - CEFET/RJ", layout="wide")
 
-# Título Principal
-st.title("📊 Painel de Controle de Chamados")
+# 2. Título do Dashboard
+st.title("📊 Portal de Relatórios de Chamados")
 st.markdown("---")
 
-# 2. Função Robusta para Carregar Dados
-@st.cache_data
-def carregar_dados():
-    try:
-        # Nome do arquivo deve ser exatamente este
-        return pd.read_csv('stats-dept-20260303.csv')
-    except Exception as e:
-        st.error(f"Erro ao ler o arquivo CSV: {e}")
-        return None
+# 3. Função para listar e carregar os arquivos CSV
+def buscar_arquivos():
+    # Procura todos os arquivos que terminam com .csv na pasta
+    arquivos = [f for f in os.listdir('.') if f.endswith('.csv')]
+    return arquivos
 
-df = carregar_dados()
+arquivos_csv = buscar_arquivos()
 
-if df is not None:
-    # 3. Tratamento de Colunas (Evita o erro de 'coluna não encontrada')
-    # Definimos o que é padrão
-    unidade = df['Departamento'].iloc[0] if 'Departamento' in df.columns else "Unidade Não Identificada"
+# 4. Interface na Barra Lateral (Sidebar)
+st.sidebar.header("📁 Gerenciador de Dados")
+
+if arquivos_csv:
+    # Cria a caixinha de seleção com os nomes dos arquivos encontrados
+    arquivo_selecionado = st.sidebar.selectbox(
+        "Selecione o relatório que deseja analisar:",
+        arquivos_csv
+    )
     
-    # Verificação de Datas
-    if 'Data_Inicio' in df.columns and 'Data_Fim' in df.columns:
-        periodo_texto = f"{df['Data_Inicio'].iloc[0]} até {df['Data_Fim'].iloc[0]}"
-    else:
-        # Se não houver data no CSV, criamos um seletor na lateral
-        periodo_texto = st.sidebar.text_input("Defina o período (Ex: Março 2026)", "Período Atual")
+    st.sidebar.success(f"Arquivo carregado: {arquivo_selecionado}")
+    
+    # Carrega os dados do arquivo escolhido
+    df = pd.read_csv(arquivo_selecionado)
+    
+    # --- INÍCIO DA EXIBIÇÃO DO RELATÓRIO ---
+    
+    unidade = df['Departamento'].iloc[0] if 'Departamento' in df.columns else "Unidade não identificada"
+    st.subheader(f"Análise: {unidade}")
+    st.info(f"Arquivo atual: {arquivo_selecionado}")
 
-    # 4. Exibição do Cabeçalho
-    st.subheader(f"Resumo Operacional: {periodo_texto}")
-    st.info(f"Setor: {unidade}")
-
-    # 5. Indicadores (KPIs)
+    # Indicadores principais (KPIs)
     col1, col2, col3, col4 = st.columns(4)
     
-    # Usamos .get() ou checagem simples para evitar que o app quebre
     abertos = df['Aberto'].iloc[0] if 'Aberto' in df.columns else 0
     encerrados = df['Encerrado'].iloc[0] if 'Encerrado' in df.columns else 0
     atrasados = df['Atrasado'].iloc[0] if 'Atrasado' in df.columns else 0
-    atribuídos = df['Atribuído'].iloc[0] if 'Atribuído' in df.columns else 0
     
-    taxa_sucesso = (encerrados / abertos * 100) if abertos > 0 else 0
-
     col1.metric("Total Abertos", abertos)
-    col2.metric("Encerrados", encerrados, f"{taxa_sucesso:.1f}% Eficiência")
+    col2.metric("Encerrados", encerrados)
     col3.metric("Atrasados", atrasados, delta_color="inverse")
-    col4.metric("Em Atendimento", atribuídos)
-
-    # 2. Criar o seletor na barra lateral
-if arquivos_disponiveis:
-    arquivo_selecionado = st.sidebar.selectbox(
-        "Selecione o arquivo de dados:",
-        arquivos_disponiveis
-    )
-    
-    # 3. Carregar o arquivo que o usuário escolheu
-    @st.cache_data
-    def load_data(nome_arquivo):
-        return pd.read_csv(nome_arquivo)
-
-    df = load_data(arquivo_selecionado)
-else:
-    st.error("Nenhum arquivo .csv encontrado no repositório!")
-    st.stop()
+    col4.metric("Em Atendimento", df['Atribuído'].iloc[0] if 'Atribuído' in df.columns else 0)
 
     st.markdown("---")
 
-    # 6. Visualização Gráfica
+    # Gráficos
     c1, c2 = st.columns(2)
 
     with c1:
-        st.write("### Volume por Status")
-        status_lista = ['Aberto', 'Atribuído', 'Atrasado', 'Encerrado', 'Reaberto', 'Deletado']
-        # Filtra apenas o que existe no seu CSV
-        cols_ok = [c for c in status_lista if c in df.columns]
+        st.write("### Status dos Chamados")
+        status_cols = ['Aberto', 'Atribuído', 'Atrasado', 'Encerrado', 'Reaberto', 'Deletado']
+        # Filtra apenas colunas que existem no CSV
+        cols_ok = [c for c in status_cols if c in df.columns]
         
         df_status = pd.DataFrame({
             'Status': cols_ok,
-            'Quantidade': df[cols_ok].iloc[0].values
+            'Qtd': df[cols_ok].iloc[0].values
         })
-        fig1 = px.bar(df_status, x='Status', y='Quantidade', color='Status', text_auto=True)
+        fig1 = px.bar(df_status, x='Status', y='Qtd', color='Status', text_auto=True)
         st.plotly_chart(fig1, use_container_width=True)
 
     with c2:
-        st.write("### Desempenho (Tempos)")
-        tempo_lista = ['Tempo de Serviço', 'Tempo de Resposta']
-        cols_t_ok = [c for c in tempo_lista if c in df.columns]
+        st.write("### Médias de Tempo")
+        tempo_cols = ['Tempo de Serviço', 'Tempo de Resposta']
+        cols_t_ok = [c for c in tempo_cols if c in df.columns]
         
         if cols_t_ok:
             df_tempo = pd.DataFrame({
                 'Métrica': cols_t_ok,
-                'Minutos': df[cols_t_ok].iloc[0].values
+                'Valor': df[cols_t_ok].iloc[0].values
             })
-            fig2 = px.bar(df_tempo, y='Métrica', x='Minutos', orientation='h', text_auto=True, color_discrete_sequence=['#3498db'])
+            fig2 = px.bar(df_tempo, y='Métrica', x='Valor', orientation='h', text_auto=True, color_discrete_sequence=['#E67E22'])
             st.plotly_chart(fig2, use_container_width=True)
-        else:
-            st.warning("Métricas de tempo não encontradas no arquivo.")
 
-    # Tabela final
-    with st.expander("Clique para ver os dados brutos"):
+    # Tabela detalhada
+    with st.expander("Ver dados brutos da tabela"):
         st.write(df)
 
 else:
-    st.warning("⚠️ Aguardando upload do arquivo CSV no GitHub...")
+    st.warning("⚠️ Nenhum arquivo .csv foi encontrado no repositório. Por favor, suba os arquivos de dados para o GitHub.")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("Dica: Para adicionar novos dados, basta fazer o upload de um novo arquivo .csv no seu GitHub.")
