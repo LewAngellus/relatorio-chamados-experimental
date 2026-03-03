@@ -1,2 +1,2 @@
-﻿Departamento,Aberto,Atribuído,Atrasado,Encerrado,Reaberto,Deletado,"Tempo de Serviço","Tempo de Resposta"
-"SINFO - Maria da Graça ",28,6,7,23,0,0,156.1,77.8
+﻿Departamento,Data_Inicio,Data_Fim,Aberto,Atribuído,Atrasado,Encerrado,Reaberto,Deletado,"Tempo de Serviço","Tempo de Resposta","Intervalo"
+"SINFO - Maria da Graça ",01-04-2025,02-07-2025,28,6,7,23,0,0,156.1,77.8
