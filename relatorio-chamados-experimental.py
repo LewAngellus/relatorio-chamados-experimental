@@ -6,33 +6,21 @@ import re
 
 # 1. Configurações de layout
 st.set_page_config(
-    page_title="Relatório SINFO - CEFET/RJ",
+    page_title="Relatórios SINFO - CEFET/RJ",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS: VOLTA OS 3 PONTINHOS, MATA O SCROLL E ESCONDE O "LA" ---
+# --- CSS: REMOVE SCROLL, LOGO "LA" E AJUSTA CABEÇALHO/RODAPÉ ---
 st.markdown("""
     <style>
-    /* 1. Esconde o logo "LA" e o rodapé da interface sempre */
-    footer, [data-testid="stStatusWidget"] {
+    /* Esconde elementos de interface e o logo "LA" (StatusWidget) */
+    footer, [data-testid="stStatusWidget"], header, [data-testid="stToolbar"] {
         display: none !important;
         visibility: hidden !important;
     }
 
-    /* 2. LIBERA O MENU (3 PONTINHOS) NA TELA */
-    @media screen {
-        header { 
-            visibility: visible !important; 
-            height: 3rem !important;
-        }
-        [data-testid="stToolbar"] { 
-            visibility: visible !important; 
-            display: block !important;
-        }
-    }
-
-    /* 3. AJUSTES PARA IMPRESSÃO (PDF/A4) */
+    /* AJUSTES PARA IMPRESSÃO (PDF/A4) */
     @media print {
         /* Remove a marca de scroll no PDF (Chromium/Brave) */
         html, body, [data-testid="stAppViewContainer"], .main, .stApp {
@@ -43,7 +31,7 @@ st.markdown("""
         ::-webkit-scrollbar { display: none !important; }
 
         /* Esconde menus e barras no papel */
-        header, [data-testid="stSidebar"], .stButton, .stExpander, [data-testid="stToolbar"] {
+        [data-testid="stSidebar"], .stButton, .stExpander {
             display: none !important;
         }
         
@@ -65,13 +53,12 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Função para interpretar a data no título do arquivo (ex: 2025-out-05)
+# Função para interpretar a data no título do arquivo
 def interpretar_titulo(nome):
     meses_map = {
         'jan': '01', 'fev': '02', 'mar': '03', 'abr': '04', 'mai': '05', 'jun': '06',
         'jul': '07', 'ago': '08', 'set': '09', 'out': '10', 'nov': '11', 'dez': '12'
     }
-    # Tenta padrão com texto (abr, out...)
     txt = re.findall(r'(\d{4})-([a-z]{3})-(\d{2})', nome.lower())
     if len(txt) >= 2:
         d1 = f"{txt[0][2]}/{meses_map.get(txt[0][1], '00')}/{txt[0][0]}"
@@ -79,7 +66,7 @@ def interpretar_titulo(nome):
         return f"{d1} a {d2}"
     return "Data não identificada"
 
-# 2. TÍTULO DO CABEÇALHO (O QUE VOCÊ PEDIU)
+# 2. TÍTULO DO CABEÇALHO (ATUALIZADO)
 st.title("📊 Relatório de Controle de Chamados - CEFET/RJ")
 st.markdown("---")
 
@@ -87,7 +74,6 @@ st.markdown("---")
 arquivos_csv = sorted([f for f in os.listdir('.') if f.lower().endswith('.csv')], reverse=True)
 
 if arquivos_csv:
-    # A setinha ( > ) agora aparece no topo esquerdo para você abrir isto
     arquivo_selecionado = st.sidebar.selectbox("Escolha o Trimestre:", arquivos_csv)
     data_auto = interpretar_titulo(arquivo_selecionado)
     periodo_input = st.sidebar.text_input("Data do Relatório:", value=data_auto)
@@ -100,13 +86,13 @@ if arquivos_csv:
         st.markdown(f"### 📅 Período: {periodo_input}")
         st.markdown(f"### 📍 Unidade: {unidade}")
 
-        # KPIs (Cálculo da taxa CORRIGIDO - Linha 83)
+        # KPIs (Cálculo da taxa corrigido - SyntaxError resolvido)
         st.markdown("<br>", unsafe_allow_html=True)
         c1, c2, c3, c4 = st.columns(4)
         abertos = int(df['Aberto'].iloc[0])
         encerrados = int(df['Encerrado'].iloc[0])
         
-        # TAXA CALC: Corrigido fechamento de parêntese e lógica
+        # Correção da linha 83: parêntese fechado e cálculo seguro
         taxa_calc = (encerrados / abertos * 100) if abertos > 0 else 0
 
         c1.metric("Total", abertos)
@@ -117,10 +103,10 @@ if arquivos_csv:
         st.markdown("---")
 
         # --- GRÁFICOS HORIZONTAIS ---
-        st.write("#### 📈 Distribuição Status")
         col_a, col_b = st.columns(2)
         
         with col_a:
+            st.write("#### 📈 Distribuição Status")
             status_cols = ['Aberto', 'Atribuído', 'Atrasado', 'Encerrado']
             df_status = pd.DataFrame({'Status': status_cols, 'Qtd': df[status_cols].iloc[0].values})
             fig1 = px.bar(df_status, x='Qtd', y='Status', orientation='h', text_auto=True, color='Status')
@@ -139,11 +125,11 @@ if arquivos_csv:
                 fig2.update_layout(height=250, margin=dict(l=10, r=10, t=10, b=10))
                 st.plotly_chart(fig2, use_container_width=True)
 
-        # 4. RODAPÉ (O QUE VOCÊ PEDIU)
+        # RODAPÉ (ATUALIZADO)
         st.markdown("---")
         st.caption("Relatório Oficial SINFO/CEFET-RJ | Documento Gerado Automaticamente.")
 
     except Exception as e:
         st.error(f"Erro no processamento: {e}")
 else:
-    st.warning("Nenhum CSV encontrado na raiz do GitHub.")
+    st.warning("Nenhum CSV encontrado.")
