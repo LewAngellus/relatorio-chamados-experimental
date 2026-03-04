@@ -11,14 +11,29 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS: LIMPA O PDF, ESCONDE O "LA" E MANTÉM MENUS NA TELA ---
+# --- CSS: ESCONDE O "LA" E O "BUILT WITH", LIMPA O PDF, LIBERA MENUS ---
 st.markdown("""
     <style>
-    @media screen { header { visibility: visible !important; } }
+    /* 1. MÁGICA: Esconde o logo circular "LA" (StatusWidget) e o rodapé sempre */
+    [data-testid="stStatusWidget"], footer {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* 2. Mantém o header e a setinha lateral na tela para você usar */
+    @media screen {
+        header { visibility: visible !important; }
+    }
+
+    /* 3. AJUSTES EXCLUSIVOS PARA IMPRESSÃO (PDF/A4) */
     @media print {
+        /* Esconde menus no papel */
         header, [data-testid="stSidebar"], .stButton, .stExpander, [data-testid="stToolbar"] {
             display: none !important;
         }
+        /* Mantemos o PDF branco para economizar tinta */
+        .stApp { background-color: white !important; } 
+        
         [data-testid="column"] {
             width: 48% !important;
             flex: 1 1 48% !important;
@@ -29,7 +44,8 @@ st.markdown("""
             padding: 5mm !important;
             margin: 0 !important;
         }
-        h1, h2, h3, h4, span { color: black !important; }
+        /* Força texto preto no papel */
+        h1, h2, h3, h4, span, p { color: black !important; }
     }
     </style>
     """, unsafe_allow_html=True)
