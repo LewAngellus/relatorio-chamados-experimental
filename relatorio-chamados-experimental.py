@@ -80,4 +80,44 @@ if arquivos_csv:
         encerrados = int(df['Encerrado'].iloc[0])
         
         # Correção da linha 70 que deu erro: taxa_calc agora está completa
-        taxa_calc = (encerrados / abertos *
+        taxa_calc = (encerrados / abertos * 100) if abertos > 0 else 0
+
+        c1.metric("Total", abertos)
+        c2.metric("Concluídos", encerrados, f"{taxa_calc:.1f}% Eficiência")
+        c3.metric("Atrasados", int(df['Atrasado'].iloc[0]))
+        c4.metric("Atribuídos", int(df['Atribuído'].iloc[0]))
+
+        st.markdown("---")
+
+        # --- GRÁFICOS HORIZONTAIS PARA A4 ---
+        st.write("#### 📈 Distribuição de Status e Tempos (SLA)")
+        
+        col_a, col_b = st.columns(2)
+        
+        with col_a:
+            status_cols = ['Aberto', 'Atribuído', 'Atrasado', 'Encerrado']
+            df_status = pd.DataFrame({'Status': status_cols, 'Qtd': df[status_cols].iloc[0].values})
+            fig1 = px.bar(df_status, x='Qtd', y='Status', orientation='h', text_auto=True, color='Status')
+            fig1.update_traces(textposition='inside', insidetextanchor='start')
+            fig1.update_layout(showlegend=False, height=250, margin=dict(l=10, r=10, t=10, b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig1, use_container_width=True)
+
+        with col_b:
+            if 'Tempo de Serviço' in df.columns:
+                df_tempo = pd.DataFrame({
+                    'Métrica': ['Resposta', 'Serviço'],
+                    'Minutos': [df['Tempo de Resposta'].iloc[0], df['Tempo de Serviço'].iloc[0]]
+                })
+                fig2 = px.bar(df_tempo, x='Minutos', y='Métrica', orientation='h', text_auto=True, color_discrete_sequence=['#2ecc71'])
+                fig2.update_traces(textposition='inside', insidetextanchor='start')
+                fig2.update_layout(height=250, margin=dict(l=10, r=10, t=10, b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                st.plotly_chart(fig2, use_container_width=True)
+
+        st.markdown("---")
+        st.caption("Relatório Oficial SINFO/CEFET-RJ | Documento Gerado Automaticamente")
+
+    except Exception as e:
+        st.error(f"Erro ao processar dados: {e}")
+
+else:
+    st.warning("⚠️ Nenhum arquivo .csv encontrado. Verifique se eles estão na raiz do seu repositório GitHub.")
