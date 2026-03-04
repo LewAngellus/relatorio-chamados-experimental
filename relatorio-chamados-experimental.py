@@ -44,7 +44,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # 2. Título do Painel
-st.title("📊 Painel de Controle de Chamados - CEFET/RJ")
+st.title("📊 Relatório de Chamados - CEFET/RJ")
 st.markdown("---")
 
 # 3. Gerenciamento de Arquivos
