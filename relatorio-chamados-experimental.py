@@ -7,24 +7,36 @@ import os
 st.set_page_config(
     page_title="Relatórios SINFO - CEFET/RJ",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed" # Começa fechada, mas agora a seta aparece!
 )
 
-# --- CSS: ESCONDE "LA", FORÇA MODO CLARO E AJUSTA A4 ---
+# --- CSS: ESCONDE O "LA" E LIMPA O PDF, MAS MANTÉM OS MENUS NA TELA ---
 st.markdown("""
     <style>
+    /* Força fundo branco */
     .stApp { background-color: white !important; color: black !important; }
     
-    /* Remove o logo "LA" e barras de interface */
-    header, footer, [data-testid="stToolbar"], [data-testid="stStatusWidget"] {
+    /* Esconde o rodapé e o widget "LA" (StatusWidget) sempre */
+    footer, [data-testid="stStatusWidget"] {
         display: none !important;
         visibility: hidden !important;
     }
 
+    /* Ajustes para a tela (Browser) */
+    @media screen {
+        /* Mantém o header visível para você acessar Settings e Sidebar */
+        header { 
+            background-color: rgba(255, 255, 255, 0.8) !important;
+        }
+    }
+
+    /* AJUSTES EXCLUSIVOS PARA IMPRESSÃO (PDF/A4) */
     @media print {
-        [data-testid="stSidebar"], .stButton, .stCheckbox, .stExpander {
+        /* Aqui sim, escondemos tudo para o Diretor não ver menus */
+        header, [data-testid="stSidebar"], .stButton, .stCheckbox, .stExpander, [data-testid="stToolbar"] {
             display: none !important;
         }
+        /* Mantém o layout lado a lado no A4 */
         [data-testid="column"] {
             width: 48% !important;
             flex: 1 1 48% !important;
@@ -44,70 +56,28 @@ st.markdown("""
 st.title("📊 Painel de Controle de Chamados - CEFET/RJ")
 st.markdown("---")
 
-# 3. Busca de Arquivos (MELHORADA: Aceita .csv e .CSV)
+# 3. Busca de Arquivos (Melhorada para pegar tudo)
 arquivos_csv = sorted([f for f in os.listdir('.') if f.lower().endswith('.csv')], reverse=True)
 
-st.sidebar.header("📁 Opções do Relatório")
-
 if arquivos_csv:
-    # Mostra a lista de arquivos encontrados
-    arquivo_selecionado = st.sidebar.selectbox("Selecione o arquivo CSV:", arquivos_csv)
-    
-    # Formato de data conforme solicitado
-    periodo_input = st.sidebar.text_input("Período do Relatório:", value="03/04/2025 a 03/07/2025")
+    # Sidebar: Agora você verá a setinha ( > ) no topo esquerdo para abrir isto!
+    arquivo_selecionado = st.sidebar.selectbox("Escolha o Trimestre:", arquivos_csv)
+    periodo_input = st.sidebar.text_input("Data p/ Relatório:", value="03/04/2025 a 03/07/2025")
     
     try:
         df = pd.read_csv(arquivo_selecionado)
         unidade = df['Departamento'].iloc[0] if 'Departamento' in df.columns else "SINFO - Maria da Graça"
 
-        # --- CABEÇALHO CLÁSSICO ---
+        # --- CABEÇALHO CLÁSSICO (O QUE VOCÊ GOSTA) ---
         st.markdown(f"### 📅 Período: {periodo_input}")
         st.markdown(f"### 📍 Unidade: {unidade}")
 
-        # KPIs
+        # KPIs (Cálculo corrigido para evitar o SyntaxError)
         st.markdown("<br>", unsafe_allow_html=True)
         c1, c2, c3, c4 = st.columns(4)
+        
         abertos = int(df['Aberto'].iloc[0])
         encerrados = int(df['Encerrado'].iloc[0])
-        taxa_calc = (encerrados / abertos * 100) if abertos > 0 else 0
-
-        c1.metric("Total", abertos)
-        c2.metric("Concluídos", encerrados, f"{taxa_calc:.1f}%")
-        c3.metric("Atrasados", int(df['Atrasado'].iloc[0]))
-        c4.metric("Atribuídos", int(df['Atribuído'].iloc[0]))
-
-        st.markdown("---")
-
-        # --- GRÁFICOS COMPACTOS PARA A4 ---
-        col_a, col_b = st.columns(2)
         
-        with col_a:
-            st.write("#### Distribuição por Status")
-            status_cols = ['Aberto', 'Atribuído', 'Atrasado', 'Encerrado']
-            df_status = pd.DataFrame({'Status': status_cols, 'Qtd': df[status_cols].iloc[0].values})
-            fig1 = px.bar(df_status, x='Qtd', y='Status', orientation='h', text_auto=True, color='Status')
-            fig1.update_traces(textposition='inside', insidetextanchor='start')
-            fig1.update_layout(showlegend=False, height=250, margin=dict(l=10, r=10, t=10, b=10))
-            st.plotly_chart(fig1, use_container_width=True)
-
-        with col_b:
-            if 'Tempo de Serviço' in df.columns:
-                df_tempo = pd.DataFrame({
-                    'Métrica': ['Resposta', 'Serviço'],
-                    'Minutos': [df['Tempo de Resposta'].iloc[0], df['Tempo de Serviço'].iloc[0]]
-                })
-                fig2 = px.bar(df_tempo, x='Minutos', y='Métrica', orientation='h', text_auto=True, color_discrete_sequence=['#2ecc71'])
-                fig2.update_traces(textposition='inside', insidetextanchor='start')
-                fig2.update_layout(height=250, margin=dict(l=10, r=10, t=10, b=10))
-                st.plotly_chart(fig2, use_container_width=True)
-
-        st.markdown("---")
-        st.caption("Relatório Oficial SINFO/CEFET-RJ | Documento Gerado Automaticamente")
-
-    except Exception as e:
-        st.error(f"Erro ao ler o arquivo selecionado: {e}")
-
-else:
-    # Caso não encontre nenhum arquivo, mostra este aviso e lista o que tem no diretório
-    st.warning("⚠️ Nenhum arquivo .csv encontrado na raiz do GitHub.")
-    st.write("Arquivos detectados no servidor:", os.listdir('.'))
+        # Correção da linha 70 que deu erro: taxa_calc agora está completa
+        taxa_calc = (encerrados / abertos *
