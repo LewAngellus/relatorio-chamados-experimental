@@ -3,69 +3,74 @@ import pandas as pd
 import plotly.express as px
 import os
 
-# 1. Configurações de layout
+# 1. Configurações de layout (Sempre a primeira linha)
 st.set_page_config(
     page_title="Relatório SINFO - CEFET/RJ",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS PARA FORÇAR TUDO EM 1 PÁGINA A4 ---
+# --- CSS PARA FORÇAR MODO CLARO E 1 PÁGINA A4 ---
 st.markdown("""
     <style>
-    /* Força modo claro na tela */
+    /* Força Fundo Branco na Tela */
     .stApp { background-color: white !important; color: black !important; }
     
     @media print {
+        /* Esconde o que não vai pro papel */
         [data-testid="stSidebar"], .stButton, header, [data-testid="stToolbar"], .stDetails, .stCheckbox, .stExpander {
             display: none !important;
         }
-        /* Ajuste fino de margens para caber em 1 folha */
+        /* Ajuste de Margens para 1 folha A4 */
         .main .block-container {
             max-width: 100% !important;
-            padding: 10mm !important; 
+            padding: 5mm !important;
             margin: 0 !important;
         }
-        /* Mantém as colunas lado a lado na impressão */
+        /* Mantém gráficos lado a lado na impressão */
         [data-testid="column"] {
             width: 48% !important;
             flex: 1 1 48% !important;
             min-width: 48% !important;
         }
-        h1 { font-size: 20pt !important; }
-        h3, h4 { font-size: 14pt !important; margin-bottom: 5px !important; }
+        h1, h2, h3, h4 { color: black !important; }
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. Título do Painel
+# 2. Título do Dashboard
 st.title("📊 Painel de Controle de Chamados - CEFET/RJ")
+st.markdown("---")
 
-# 3. Busca de Arquivos
+# 3. Gerenciamento de Arquivos
 arquivos_csv = sorted([f for f in os.listdir('.') if f.endswith('.csv')], reverse=True)
 
 if arquivos_csv:
-    arquivo_selecionado = st.sidebar.selectbox("Escolha o Trimestre:", arquivos_csv)
-    periodo_input = st.sidebar.text_input("Data do Relatório:", value="03/abr/2025 a 03/jul/2025")
-
+    # Sidebar acessível para trocar o arquivo
+    arquivo_selecionado = st.sidebar.selectbox("Arquivo:", arquivos_csv)
+    periodo_input = st.sidebar.text_input("Data p/ Relatório:", value="03 abr 2025 a 03 jul 2025")
+    
     try:
         df = pd.read_csv(arquivo_selecionado)
         unidade = df['Departamento'].iloc[0] if 'Departamento' in df.columns else "SINFO - Maria da Graça"
 
-        # --- CABEÇALHO COMPACTO ---
-        st.markdown(f"**📅 Período:** {periodo_input} | **📍 Unidade:** {unidade}")
-        st.markdown("---")
+        # --- CABEÇALHO COM ÍCONES QUE VOCÊ GOSTA ---
+        st.markdown(f"### 📅 Período: {periodo_input}")
+        st.markdown(f"### 📍 Unidade: {unidade}")
 
-        # KPIs (Métricas em linha única)
+        # KPIs Compactos
+        st.markdown("<br>", unsafe_allow_html=True)
         c1, c2, c3, c4 = st.columns(4)
         abertos = int(df['Aberto'].iloc[0])
         encerrados = int(df['Encerrado'].iloc[0])
-        taxa = (encerrados / abertos * 100) if abertos > 0 else 0
+        taxa_calc = (encerrados / abertos * 100) if abertos > 0 else 0
 
         c1.metric("Total", abertos)
-        c2.metric("Concluídos", encerrados, f"{taxa:.1f}%")
+        c2.metric("Concluídos", encerrados, f"{taxa_calc:.1f}%")
         c3.metric("Atrasados", int(df['Atrasado'].iloc[0]))
         c4.metric("Atribuídos", int(df['Atribuído'].iloc[0]))
+
+        st.markdown("---")
 
         # --- GRÁFICOS HORIZONTAIS COM NÚMEROS NA BASE ---
         st.write("#### 📈 Distribuição de Status e Tempos (SLA)")
@@ -77,9 +82,9 @@ if arquivos_csv:
             df_status = pd.DataFrame({'Status': status_cols, 'Qtd': df[status_cols].iloc[0].values})
             
             fig1 = px.bar(df_status, x='Qtd', y='Status', orientation='h', text_auto=True, color='Status')
-            # MÁGICA AQUI: posiciona o texto no início (base) da barra
+            # Texto na base da barra (alinhado à esquerda)
             fig1.update_traces(textposition='inside', insidetextanchor='start')
-            fig1.update_layout(showlegend=False, height=250, margin=dict(l=10, r=30, t=10, b=10))
+            fig1.update_layout(showlegend=False, height=250, margin=dict(l=10, r=10, t=10, b=10))
             st.plotly_chart(fig1, use_container_width=True)
 
         with col_b:
@@ -89,17 +94,17 @@ if arquivos_csv:
                     'Minutos': [df['Tempo de Resposta'].iloc[0], df['Tempo de Serviço'].iloc[0]]
                 })
                 fig2 = px.bar(df_tempo, x='Minutos', y='Métrica', orientation='h', text_auto=True, color_discrete_sequence=['#2ecc71'])
-                # MÁGICA AQUI: posiciona o texto no início (base) da barra
+                # Texto na base da barra
                 fig2.update_traces(textposition='inside', insidetextanchor='start')
-                fig2.update_layout(height=250, margin=dict(l=10, r=30, t=10, b=10))
+                fig2.update_layout(height=250, margin=dict(l=10, r=10, t=10, b=10))
                 st.plotly_chart(fig2, use_container_width=True)
 
-        # Rodapé Institucional
+        # Rodapé
         st.markdown("---")
-        st.caption("Relatório gerado automaticamente pelo Sistema de Gestão SINFO/CEFET-RJ")
+        st.caption("Relatório Oficial SINFO/CEFET-RJ | Documento Gerado Automaticamente")
 
     except Exception as e:
-        st.error(f"Erro: {e}")
+        st.error(f"Erro ao processar dados: {e}")
 
 else:
-    st.warning("Nenhum arquivo encontrado.")
+    st.warning("⚠️ Nenhum arquivo .csv encontrado.")
