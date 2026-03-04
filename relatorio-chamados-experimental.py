@@ -62,7 +62,7 @@ arquivos_csv = sorted([f for f in os.listdir('.') if f.lower().endswith('.csv')]
 if arquivos_csv:
     # Sidebar: Agora você verá a setinha ( > ) no topo esquerdo para abrir isto!
     arquivo_selecionado = st.sidebar.selectbox("Escolha o Trimestre:", arquivos_csv)
-    periodo_input = st.sidebar.text_input("Data p/ Relatório:", value="03/04/2025 a 03/07/2025")
+    periodo_input = st.sidebar.text_input("Data p/ Relatório:", value="DD/MM/YYYY a DD/MM/YYYY")
     
     try:
         df = pd.read_csv(arquivo_selecionado)
