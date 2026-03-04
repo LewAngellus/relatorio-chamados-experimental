@@ -14,8 +14,6 @@ st.set_page_config(
 # --- CSS: LIMPA O PDF, ESCONDE O "LA" E MANTÉM MENUS NA TELA ---
 st.markdown("""
     <style>
-    .stApp { background-color: white !important; color: black !important; }
-    footer, [data-testid="stStatusWidget"] { display: none !important; }
     @media screen { header { visibility: visible !important; } }
     @media print {
         header, [data-testid="stSidebar"], .stButton, .stExpander, [data-testid="stToolbar"] {
