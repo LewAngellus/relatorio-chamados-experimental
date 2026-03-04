@@ -120,7 +120,7 @@ if arquivos_csv:
                 st.plotly_chart(fig2, use_container_width=True)
 
         st.markdown("---")
-        st.caption("Relatório Oficial SINFO/CEFET-RJ")
+        st.caption("Relatório Oficial SINFO/CEFET-RJ | Documento Gerado Automaticamente.")
 
     except Exception as e:
         st.error(f"Erro ao ler os dados: {e}")
