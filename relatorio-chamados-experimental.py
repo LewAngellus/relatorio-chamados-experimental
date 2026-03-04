@@ -11,29 +11,31 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- CSS: REMOVE SCROLL, ESCONDE "LA" E AJUSTA A4 ---
+# --- CSS: REMOVE SCROLL, LOGO "LA" E AJUSTA CABEÇALHO/RODAPÉ ---
 st.markdown("""
     <style>
-    /* Esconde o logo "LA" e o rodapé da interface sempre */
-    footer, [data-testid="stStatusWidget"] {
+    /* Esconde elementos de interface e o logo "LA" (StatusWidget) */
+    footer, [data-testid="stStatusWidget"], header, [data-testid="stToolbar"] {
         display: none !important;
         visibility: hidden !important;
     }
 
     /* AJUSTES PARA IMPRESSÃO (PDF/A4) */
     @media print {
-        /* Remove a barra de rolagem (Scroll) no PDF */
-        html, body, [data-testid="stAppViewContainer"] {
+        /* Remove a marca de scroll no PDF (Chromium/Brave) */
+        html, body, [data-testid="stAppViewContainer"], .main, .stApp {
             overflow: visible !important;
             height: auto !important;
+            position: static !important;
         }
         ::-webkit-scrollbar { display: none !important; }
 
-        header, [data-testid="stSidebar"], .stButton, .stExpander, [data-testid="stToolbar"] {
+        /* Esconde menus e barras no papel */
+        [data-testid="stSidebar"], .stButton, .stExpander {
             display: none !important;
         }
         
-        /* Força fundo branco e layout A4 */
+        /* Layout A4 e fundo branco */
         .stApp { background-color: white !important; } 
         [data-testid="column"] {
             width: 48% !important;
@@ -51,7 +53,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Função para interpretar o título
+# Função para interpretar a data no título do arquivo
 def interpretar_titulo(nome):
     meses_map = {
         'jan': '01', 'fev': '02', 'mar': '03', 'abr': '04', 'mai': '05', 'jun': '06',
@@ -84,13 +86,13 @@ if arquivos_csv:
         st.markdown(f"### 📅 Período: {periodo_input}")
         st.markdown(f"### 📍 Unidade: {unidade}")
 
-        # KPIs (Cálculo da taxa corrigido para evitar o SyntaxError)
+        # KPIs (Cálculo da taxa corrigido - SyntaxError resolvido)
         st.markdown("<br>", unsafe_allow_html=True)
         c1, c2, c3, c4 = st.columns(4)
         abertos = int(df['Aberto'].iloc[0])
         encerrados = int(df['Encerrado'].iloc[0])
         
-        # CORREÇÃO DA LINHA 83: parêntese fechado e cálculo seguro
+        # Correção da linha 83: parêntese fechado e cálculo seguro
         taxa_calc = (encerrados / abertos * 100) if abertos > 0 else 0
 
         c1.metric("Total", abertos)
@@ -128,6 +130,6 @@ if arquivos_csv:
         st.caption("Relatório Oficial SINFO/CEFET-RJ | Documento Gerado Automaticamente.")
 
     except Exception as e:
-        st.error(f"Erro: {e}")
+        st.error(f"Erro no processamento: {e}")
 else:
     st.warning("Nenhum CSV encontrado.")
