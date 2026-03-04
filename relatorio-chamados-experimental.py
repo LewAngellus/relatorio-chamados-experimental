@@ -88,7 +88,7 @@ if arquivos_csv:
                 'Métrica': ['Resposta', 'Serviço'],
                 'Minutos': [df['Tempo de Resposta'].iloc[0], df['Tempo de Serviço'].iloc[0]]
             })
-            fig2 = px.bar(df_tempo, x='Minutos', y='Métrica', orientation='h', text_auto=True, color_discrete_sequence=['#2ecc71'])
+            fig2 = px.bar(df_tempo, x='Minutos', y='Métrica', orientation='v', text_auto=True, color_discrete_sequence=['#2ecc71'])
             fig2.update_layout(height=350)
             st.plotly_chart(fig2, use_container_width=True)
 
