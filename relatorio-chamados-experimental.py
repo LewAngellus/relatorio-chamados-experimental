@@ -10,23 +10,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed" # Isso garante que comece escondida
 )
 
-# --- BLOCO DE IMPRESSÃO (A4) ---
-# Este código garante que ao imprimir (Ctrl+P), a barra lateral e menus sumam
-st.markdown("""
-    <style>
-    @media print {
-        [data-testid="stSidebar"], .stButton, header, [data-testid="stToolbar"], .stDetails {
-            display: none !important;
-        }
-        .main .block-container {
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100% !important;
-        }
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
 st.title("📊 Painel de Controle de Chamados - CEFET/RJ")
 st.markdown("---")
 
@@ -49,16 +32,10 @@ if arquivos_csv:
     df = pd.read_csv(arquivo_selecionado)
     unidade = df['Departamento'].iloc[0] if 'Departamento' in df.columns else "SINFO"
 
-    # --- CABEÇALHO FORMAL (Aparece no topo do relatório) ---
-    st.markdown(f"""
-        <div style='text-align: center;'>
-            <h2 style='margin-bottom: 0;'>CEFET/RJ - Relatório de Atividades TI</h2>
-            <h4 style='margin-top: 0;'>Unidade: {unidade}</h4>
-        </div>
-    """, unsafe_allow_html=True)
-
+    # --- CABEÇALHO ---
     st.header(f"📅 Período: {periodo_final}")
-    
+    st.subheader(f"📍 Unidade: {unidade}")
+
     # KPIs Principais
     c1, c2, c3, c4 = st.columns(4)
     abertos = df['Aberto'].iloc[0]
@@ -91,21 +68,7 @@ if arquivos_csv:
             })
             st.plotly_chart(px.bar(df_tempo, x='Minutos', y='Métrica', orientation='h', text_auto=True, color_discrete_sequence=['#2ecc71']), use_container_width=True)
 
-    # --- CAMPO DE ASSINATURAS PARA O DIRETOR ---
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("""
-        <div style='display: flex; justify-content: space-around; margin-top: 50px;'>
-            <div style='border-top: 1px solid black; width: 250px; text-align: center;'>
-                <small>Responsável Técnico SINFO</small>
-            </div>
-            <div style='border-top: 1px solid black; width: 250px; text-align: center;'>
-                <small>Direção Geral CEFET/RJ</small>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Base de dados para conferência (Ela não sai bem na impressão, então fica no expander)
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Base de dados para conferência
     with st.expander("Ver dados brutos do CSV"):
         st.dataframe(df)
 
@@ -113,4 +76,4 @@ else:
     st.warning("Nenhum arquivo CSV encontrado no repositório GitHub.")
 
 st.sidebar.markdown("---")
-st.sidebar.info("Dica: Para gerar o PDF, use Ctrl+P e selecione 'Salvar como PDF'. Certifique-se de que a barra lateral esteja fechada.")
+st.sidebar.info("Dica: Nomeie seus arquivos como '2026-Q1-Jan_a_Mar.csv' para organização automática.")
