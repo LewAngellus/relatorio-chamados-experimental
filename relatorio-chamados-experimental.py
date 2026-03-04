@@ -74,7 +74,7 @@ def interpretar_titulo(nome):
     return "03/04/2025 a 03/07/2025"
 
 # 2. Título
-st.title("📊 Relatório de Controle de Chamados - CEFET-MG")
+st.title("📊 Relatório de Controle de Chamados")
 st.markdown("---")
 
 # 3. Busca de Arquivos
