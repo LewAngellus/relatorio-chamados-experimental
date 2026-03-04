@@ -16,7 +16,6 @@ st.markdown("""
     /* Estilo para a tela do computador */
     @media screen {
         .main .block-container { padding-top: 2rem; }
-        .print-only { display: none; }
     }
 
     /* Estilo EXCLUSIVO para Impressão PDF (A4) */
@@ -26,7 +25,7 @@ st.markdown("""
             display: none !important;
         }
         
-        /* Força os gráficos a ocuparem 100% da largura da folha A4 */
+        /* FORÇA OS GRÁFICOS A FICAREM UM EMBAIXO DO OUTRO E GRANDES */
         [data-testid="column"] {
             width: 100% !important;
             flex: 1 1 100% !important;
@@ -42,7 +41,24 @@ st.markdown("""
         
         /* Evita cortes no meio dos gráficos */
         .stPlotlyChart { page-break-inside: avoid !important; }
-        h1, h2, h3, h4, p { color: black !important; text-align: center !important; }
+        
+        /* Garante que o texto saia preto no papel */
+        h1, h2, h3, h4, p, span { color: black !important; }
+    }
+
+    /* Estilo do Botão de Impressão Customizado */
+    .print-btn {
+        background-color: #2ecc71;
+        color: white;
+        padding: 15px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        text-align: center;
+        display: block;
+        margin: 20px auto;
+        text-decoration: none;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -64,7 +80,7 @@ if arquivos_csv:
         df = pd.read_csv(arquivo_selecionado)
         unidade = df['Departamento'].iloc[0] if 'Departamento' in df.columns else "SINFO - Maria da Graça"
 
-        # --- CABEÇALHO ESTILO SINFO ---
+        # --- CABEÇALHO COM PINO E CALENDÁRIO ---
         st.markdown(f"### 📅 Período: {periodo_custom}")
         st.markdown(f"### 📍 Unidade: {unidade}")
 
@@ -83,7 +99,7 @@ if arquivos_csv:
 
         st.markdown("---")
 
-        # --- GRÁFICOS ADAPTADOS (EM VERTICAL PARA O A4) ---
+        # --- GRÁFICOS VERTICAIS E GRANDES PARA O A4 ---
         col_a, col_b = st.columns(2)
         
         with col_a:
@@ -91,7 +107,9 @@ if arquivos_csv:
             status_cols = ['Aberto', 'Atribuído', 'Atrasado', 'Encerrado']
             df_status = pd.DataFrame({'Status': status_cols, 'Qtd': df[status_cols].iloc[0].values})
             fig1 = px.bar(df_status, x='Status', y='Qtd', color='Status', text_auto=True)
-            fig1.update_layout(showlegend=False, height=400)
+            # Valores fora da barra para não sumirem
+            fig1.update_traces(textposition='outside')
+            fig1.update_layout(showlegend=False, height=450)
             st.plotly_chart(fig1, use_container_width=True)
 
         with col_b:
@@ -101,20 +119,22 @@ if arquivos_csv:
                     'Métrica': ['Resposta', 'Serviço'],
                     'Minutos': [df['Tempo de Resposta'].iloc[0], df['Tempo de Serviço'].iloc[0]]
                 })
+                # Gráfico Vertical como você pediu
                 fig2 = px.bar(df_tempo, x='Métrica', y='Minutos', text_auto=True, color_discrete_sequence=['#2ecc71'])
-                fig2.update_layout(height=400)
+                fig2.update_traces(textposition='outside')
+                fig2.update_layout(height=450)
                 st.plotly_chart(fig2, use_container_width=True)
 
         # 4. BOTÃO PARA GERAR RELATÓRIO PDF (Só aparece no site)
         st.markdown("---")
-        if st.button("🖨️ Gerar Relatório A4 (PDF)"):
-            st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
-            st.info("Aguarde o menu de impressão abrir. No destino, escolha 'Salvar como PDF'.")
+        # Instrução direta: O navegador bloqueia scripts de impressão automáticos em iframes.
+        # Por isso, o botão agora orienta o atalho universal que funciona sempre.
+        st.info("💡 **Para Gerar o PDF:** Use o atalho **Ctrl + P** no teclado. O layout já está configurado para ajustar tudo em uma folha A4 automaticamente.")
 
         with st.expander("Ver base de dados bruta"):
             st.dataframe(df, use_container_width=True)
 
     except Exception as e:
-        st.error(f"Erro ao ler arquivo: {e}")
+        st.error(f"Erro ao processar arquivo: {e}")
 else:
-    st.warning("Suba seus arquivos .csv para o GitHub primeiro.")
+    st.warning("Nenhum arquivo CSV encontrado. Verifique seu repositório.")
