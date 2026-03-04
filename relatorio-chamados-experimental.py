@@ -62,7 +62,7 @@ def interpretar_data_pelo_titulo(nome_arquivo):
     return nome_arquivo.replace('.csv', '').replace('_', ' ')
 
 # 2. Título
-st.title("📊 Painel de Controle de Chamados - CEFET/RJ")
+st.title("📊 Relatório de Chamados - CEFET/RJ")
 st.markdown("---")
 
 # 3. Busca de Arquivos
