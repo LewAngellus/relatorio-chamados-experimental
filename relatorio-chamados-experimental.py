@@ -3,36 +3,56 @@ import pandas as pd
 import plotly.express as px
 import os
 
-# Configurações de layout
+# 1. Configurações de layout
 st.set_page_config(
-    page_title="Relatórios SINFO - CEFET/RJ",
+    page_title="Relatório SINFO - CEFET/RJ",
     layout="wide",
-    initial_sidebar_state="collapsed" # Isso garante que comece escondida
+    initial_sidebar_state="collapsed"
 )
 
-st.title("📊 Painel de Controle de Chamados - CEFET/RJ")
+# --- CSS PARA FORMATAÇÃO DE IMPRESSÃO (PDF/A4) ---
+st.markdown("""
+    <style>
+    @media print {
+        /* Esconde elementos do site que não devem sair no PDF */
+        [data-testid="stSidebar"], .stButton, header, [data-testid="stToolbar"], .stDetails, .stCheckbox {
+            display: none !important;
+        }
+        /* Ajusta o conteúdo para o centro da página A4 */
+        .main .block-container {
+            max-width: 800px !important;
+            padding-top: 20px !important;
+            margin: 0 auto !important;
+        }
+        /* Remove sombras e fundos que gastam tinta */
+        .main {
+            background-color: white !important;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# 2. Título do Relatório
+st.title("📊 Relatório de Chamados - CEFET/RJ")
 st.markdown("---")
 
-# 1. Lista os arquivos e ordena (essencial para trimestres)
+# 3. Lista e Ordena os arquivos CSV
 arquivos_csv = sorted([f for f in os.listdir('.') if f.endswith('.csv')])
 
 st.sidebar.header("📁 Seleção do Período")
 
 if arquivos_csv:
-    # O usuário escolhe o arquivo (ex: 2026-Q1-Jan_a_Mar.csv)
     arquivo_selecionado = st.sidebar.selectbox("Escolha o Trimestre:", arquivos_csv)
     
-    # TRATAMENTO DO NOME: Transforma "2026-Q1-Jan_a_Mar.csv" em "2026 Q1 - Jan a Mar"
+    # Tratamento do nome para exibição
     nome_exibicao = arquivo_selecionado.replace('.csv', '').replace('-', ' ').replace('_', ' ')
-    
-    # Campo para ajuste fino (caso queira mudar algo na hora de apresentar)
     periodo_final = st.sidebar.text_input("Confirmar Período:", value=nome_exibicao)
 
     # Carrega os dados
     df = pd.read_csv(arquivo_selecionado)
     unidade = df['Departamento'].iloc[0] if 'Departamento' in df.columns else "SINFO"
 
-    # --- CABEÇALHO ---
+    # --- CORPO DO RELATÓRIO ---
     st.header(f"📅 Período: {periodo_final}")
     st.subheader(f"📍 Unidade: {unidade}")
 
@@ -49,31 +69,36 @@ if arquivos_csv:
 
     st.markdown("---")
 
-    # Gráficos
+    # Gráficos (Ajustados para caber no A4)
     col_a, col_b = st.columns(2)
     
     with col_a:
-        st.write("### Distribuição por Status")
+        st.write("### Status dos Chamados")
         status_cols = ['Aberto', 'Atribuído', 'Atrasado', 'Encerrado', 'Reaberto', 'Deletado']
         cols_presentes = [c for c in status_cols if c in df.columns]
         df_status = pd.DataFrame({'Status': cols_presentes, 'Qtd': df[cols_presentes].iloc[0].values})
-        st.plotly_chart(px.bar(df_status, x='Status', y='Qtd', color='Status', text_auto=True), use_container_width=True)
+        fig1 = px.bar(df_status, x='Status', y='Qtd', color='Status', text_auto=True)
+        fig1.update_layout(showlegend=False, height=350)
+        st.plotly_chart(fig1, use_container_width=True)
 
     with col_b:
         st.write("### Médias de Tempo (SLA)")
         if 'Tempo de Serviço' in df.columns:
             df_tempo = pd.DataFrame({
-                'Métrica': ['Tempo de Resposta', 'Tempo de Serviço'],
+                'Métrica': ['Resposta', 'Serviço'],
                 'Minutos': [df['Tempo de Resposta'].iloc[0], df['Tempo de Serviço'].iloc[0]]
             })
-            st.plotly_chart(px.bar(df_tempo, x='Minutos', y='Métrica', orientation='h', text_auto=True, color_discrete_sequence=['#2ecc71']), use_container_width=True)
+            fig2 = px.bar(df_tempo, x='Minutos', y='Métrica', orientation='h', text_auto=True, color_discrete_sequence=['#2ecc71'])
+            fig2.update_layout(height=350)
+            st.plotly_chart(fig2, use_container_width=True)
 
-    # Base de dados para conferência
+    # Base de dados (Aparece apenas no site)
+    st.markdown("<br>", unsafe_allow_html=True)
     with st.expander("Ver dados brutos do CSV"):
         st.dataframe(df)
 
 else:
-    st.warning("Nenhum arquivo CSV encontrado no repositório GitHub.")
+    st.warning("Nenhum arquivo CSV encontrado.")
 
 st.sidebar.markdown("---")
-st.sidebar.info("Dica: Nomeie seus arquivos como '2026-Q1-Jan_a_Mar.csv' para organização automática.")
+st.sidebar.info("Para gerar o PDF: Aperte Ctrl + P no teclado e selecione 'Salvar como PDF'.")
