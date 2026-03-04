@@ -74,7 +74,7 @@ def interpretar_titulo(nome):
     return "03/04/2025 a 03/07/2025"
 
 # 2. Título
-st.title("📊 Painel de Controle de Chamados - CEFET/RJ")
+st.title("📊 Relatório de Controle de Chamados - CEFET-MG")
 st.markdown("---")
 
 # 3. Busca de Arquivos
@@ -133,7 +133,7 @@ if arquivos_csv:
                 st.plotly_chart(fig2, use_container_width=True)
 
         st.markdown("---")
-        st.caption("Relatório Oficial SINFO/CEFET-RJ")
+        st.caption("Relatório Oficial SINFO/CEFET-RJ | Documento Gerado Automaticamente.")
 
     except Exception as e:
         st.error(f"Erro: {e}")
